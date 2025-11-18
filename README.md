@@ -2,6 +2,12 @@
 
 A comprehensive Retrieval-Augmented Generation (RAG) pipeline with advanced features including multiple retrieval methods, reranking, and evaluation capabilities.
 
+## 🚀 Deploy to Vercel
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/charm)
+
+**One-click deployment** - See [deployment guide](docs/VERCEL_DEPLOYMENT.md) for instructions.
+
 ## Features
 
 ### Module 2: Retrieval
@@ -33,6 +39,25 @@ A comprehensive Retrieval-Augmented Generation (RAG) pipeline with advanced feat
 
 ## Installation
 
+### Option 1: Deploy to Vercel (Recommended)
+
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Clone and deploy
+git clone <repository-url>
+cd charm
+vercel
+
+# Set environment variables
+vercel env add OPENAI_API_KEY
+```
+
+See [VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md) for detailed instructions.
+
+### Option 2: Local Development
+
 ```bash
 # Clone the repository
 git clone <repository-url>
@@ -50,6 +75,27 @@ cp .env.example .env
 ```
 
 ## Quick Start
+
+### Web Interface (After Deployment)
+
+1. Navigate to your deployed URL: `https://your-project.vercel.app`
+2. Use the web interface to index documents and ask questions
+
+### REST API
+
+```bash
+# Index documents
+curl -X POST https://your-project.vercel.app/api/index \
+  -H "Content-Type: application/json" \
+  -d '{"documents": ["Doc 1", "Doc 2"]}'
+
+# Query
+curl -X POST https://your-project.vercel.app/api/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Your question?", "top_k": 5}'
+```
+
+### Python Package
 
 ```python
 from rag_pipeline import RAGPipeline
@@ -76,28 +122,32 @@ print(response)
 ## Architecture
 
 ```
-rag_pipeline/
-├── retrieval/          # Module 2: Retrieval components
-│   ├── keyword_search.py
-│   ├── semantic_search.py
-│   ├── hybrid_search.py
-│   └── metadata_filter.py
-├── advanced_retrieval/ # Module 3: Advanced techniques
-│   ├── vector_stores.py
-│   ├── chunking.py
-│   ├── query_parser.py
-│   └── reranking.py
-├── generation/         # Module 4: LLM generation
-│   ├── llm_interface.py
-│   ├── prompt_engineering.py
-│   ├── hallucination_handler.py
-│   └── agentic_rag.py
-├── evaluation/         # Evaluation metrics
-│   ├── retrieval_metrics.py
-│   └── generation_metrics.py
-└── utils/             # Utilities
-    └── config.py
+charm/
+├── api/                    # Vercel serverless API
+│   └── index.py           # Flask API endpoints
+├── public/                 # Frontend
+│   └── index.html         # Web interface
+├── rag_pipeline/          # Core package
+│   ├── retrieval/         # Module 2: Retrieval
+│   ├── advanced_retrieval/# Module 3: Advanced retrieval
+│   ├── generation/        # Module 4: Generation
+│   ├── evaluation/        # Evaluation metrics
+│   └── pipeline.py        # Main pipeline
+├── examples/              # Usage examples
+├── docs/                  # Documentation
+├── vercel.json           # Vercel configuration
+└── requirements.txt      # Dependencies
 ```
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Health check and API info |
+| `/api/health` | GET | Service health status |
+| `/api/index` | POST | Index documents |
+| `/api/query` | POST | Query the RAG pipeline |
+| `/api/stats` | GET | Get pipeline statistics |
 
 ## Usage Examples
 
@@ -110,8 +160,25 @@ See the `examples/` directory for detailed usage examples:
 
 ## Documentation
 
-See `docs/` for detailed documentation on each module.
+- [Quick Start Guide](docs/QUICKSTART.md) - Get started quickly
+- [Vercel Deployment](docs/VERCEL_DEPLOYMENT.md) - Deploy to production
+- [RAG vs Fine-tuning](docs/RAG_VS_FINETUNING.md) - When to use each approach
+
+## Tech Stack
+
+- **Retrieval**: FAISS, ChromaDB, Qdrant, BM25, TF-IDF
+- **Generation**: OpenAI GPT, Anthropic Claude
+- **Web**: Flask, Vercel, vanilla JavaScript
+- **Evaluation**: Custom metrics, ROUGE, BERTScore
+
+## Contributing
+
+Contributions welcome! Please open an issue or submit a pull request.
 
 ## License
 
 MIT
+
+---
+
+Made with ❤️ for the RAG community | [Deploy to Vercel](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/charm)
