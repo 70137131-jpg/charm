@@ -63,6 +63,10 @@ See [VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md) for detailed instructions.
 git clone <repository-url>
 cd charm
 
+# Create virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
 # Install dependencies
 pip install -r requirements.txt
 
@@ -73,6 +77,32 @@ python -m spacy download en_core_web_sm
 cp .env.example .env
 # Edit .env with your API keys
 ```
+
+### Option 3: Local Flask Server
+
+Run a local Flask development server for testing and development:
+
+```bash
+# Method 1: Using the run script (easiest)
+./run_flask.sh              # On Linux/Mac
+run_flask.bat               # On Windows
+
+# Method 2: Direct Python
+python app.py               # Default: http://localhost:5000
+python app.py --port 8080   # Custom port
+python app.py --debug       # Debug mode
+
+# Method 3: Using Flask CLI
+flask run                   # Uses .flaskenv configuration
+flask run --port 8080       # Custom port
+```
+
+The local Flask server provides:
+- Full REST API on http://localhost:5000
+- Persistent document storage in `./data/`
+- Configuration via environment variables
+- Additional endpoints (`/api/reset`, `/api/config`)
+- Better error messages for development
 
 ## Quick Start
 
@@ -124,7 +154,11 @@ print(response)
 ```
 charm/
 ├── api/                    # Vercel serverless API
-│   └── index.py           # Flask API endpoints
+│   └── index.py           # Flask API endpoints (Vercel)
+├── app.py                 # Local Flask development server
+├── run_flask.sh          # Flask run script (Linux/Mac)
+├── run_flask.bat         # Flask run script (Windows)
+├── .flaskenv             # Flask environment config
 ├── public/                 # Frontend
 │   └── index.html         # Web interface
 ├── rag_pipeline/          # Core package
@@ -135,6 +169,7 @@ charm/
 │   └── pipeline.py        # Main pipeline
 ├── examples/              # Usage examples
 ├── docs/                  # Documentation
+├── data/                  # Local storage (created on first run)
 ├── vercel.json           # Vercel configuration
 └── requirements.txt      # Dependencies
 ```
@@ -148,6 +183,8 @@ charm/
 | `/api/index` | POST | Index documents |
 | `/api/query` | POST | Query the RAG pipeline |
 | `/api/stats` | GET | Get pipeline statistics |
+| `/api/config` | GET | Get current configuration (local only) |
+| `/api/reset` | POST | Reset pipeline and clear documents (local only) |
 
 ## Usage Examples
 
@@ -161,6 +198,7 @@ See the `examples/` directory for detailed usage examples:
 ## Documentation
 
 - [Quick Start Guide](docs/QUICKSTART.md) - Get started quickly
+- [Flask Local Development](docs/FLASK_LOCAL.md) - Run Flask server locally
 - [Vercel Deployment](docs/VERCEL_DEPLOYMENT.md) - Deploy to production
 - [RAG vs Fine-tuning](docs/RAG_VS_FINETUNING.md) - When to use each approach
 
