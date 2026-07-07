@@ -4,9 +4,7 @@ A comprehensive Retrieval-Augmented Generation (RAG) pipeline with advanced feat
 
 ## 🚀 Deploy to Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/charm)
-
-**One-click deployment** - See [deployment guide](docs/VERCEL_DEPLOYMENT.md) for instructions.
+https://charm-sand.vercel.app/
 
 ## Features
 
