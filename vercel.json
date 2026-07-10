@@ -3,17 +3,15 @@
   "version": 2,
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "api/index.py"
-    },
-    {
       "src": "/(.*)",
-      "dest": "public/$1"
+      "dest": "index.py"
     }
   ],
   "functions": {
-    "api/index.py": {
-      "maxDuration": 60
+    "index.py": {
+      "maxDuration": 60,
+      "includeFiles": "public/index.html",
+      "excludeFiles": "{rag_pipeline/**,data/**,docs/**,examples/**,proj1/**}"
     }
   }
 }
