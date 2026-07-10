@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: charm-rag
+    runtime: python
+    plan: free
+    region: singapore
+    branch: feature/frontend-redesign
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: LLM_MODEL
+        value: gemini-2.5-flash
+      - key: USE_RERANKER
+        value: "false"
+      - key: GEMINI_API_KEY
+        sync: false
