@@ -3,631 +3,709 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG Pipeline — Console</title>
+    <title>RAG Notebook</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         :root {
-            --bg-0: #0a0b0f;
-            --bg-1: #101218;
-            --panel: #14161d;
-            --panel-border: #23262f;
-            --text-hi: #eceef2;
-            --text-mid: #a3a8b5;
-            --text-low: #676d7d;
-            --accent: #7c9eff;
-            --accent-dim: #445a99;
-            --accent-glow: rgba(124, 158, 255, 0.18);
-            --good: #4ade80;
-            --bad: #f87171;
-            --mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            --bg: #000000;
+            --bg-soft: #0a0a0a;
+            --bg-sunk: #161616;
+            --line: #1f1f1f;
+            --line-2: #2e2e2e;
+            --ink: #fafafa;
+            --ink-2: #c4c4c6;
+            --mut: #8a8a8f;
+            --mut-2: #5c5c60;
+            --mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, Menlo, monospace;
             --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
 
         body {
             font-family: var(--sans);
-            background:
-                radial-gradient(circle at 15% 0%, rgba(124, 158, 255, 0.08), transparent 45%),
-                radial-gradient(circle at 85% 20%, rgba(124, 158, 255, 0.05), transparent 40%),
-                var(--bg-0);
-            color: var(--text-hi);
-            min-height: 100vh;
+            background: var(--bg);
+            color: var(--ink);
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .shell {
-            max-width: 1180px;
-            margin: 0 auto;
-            padding: 32px 24px 64px;
-        }
-
-        /* Header */
+        /* ---------- Top bar ---------- */
         .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            margin-bottom: 36px;
-            flex-wrap: wrap;
+            height: 60px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--line);
         }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
+        .brand { display: flex; align-items: center; gap: 12px; }
         .brand-mark {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--accent), #5a4fff);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            box-shadow: 0 0 24px var(--accent-glow);
-            flex-shrink: 0;
+            width: 30px; height: 30px; border-radius: 7px;
+            background: var(--ink); color: #000;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; flex-shrink: 0; letter-spacing: -0.02em;
         }
-
-        .brand-text h1 {
-            font-size: 1.15em;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-        }
-
-        .brand-text p {
-            font-size: 0.82em;
-            color: var(--text-low);
-            font-family: var(--mono);
-        }
-
+        .brand-text h1 { font-size: 0.95em; font-weight: 600; letter-spacing: -0.01em; }
+        .brand-text p { font-size: 0.7em; color: var(--mut-2); font-family: var(--mono); margin-top: 1px; }
         .status-pill {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 7px 14px;
-            border-radius: 999px;
-            background: var(--panel);
-            border: 1px solid var(--panel-border);
-            font-family: var(--mono);
-            font-size: 0.78em;
-            color: var(--text-mid);
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 12px; border-radius: 999px;
+            border: 1px solid var(--line); font-family: var(--mono);
+            font-size: 0.72em; color: var(--mut); text-transform: lowercase;
         }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mut-2); transition: background .3s; }
+        .dot.online { background: var(--ink); }
+        .dot.offline { background: var(--mut-2); }
 
-        .dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: var(--text-low);
-            transition: background 0.3s;
-        }
-
-        .dot.online {
-            background: var(--good);
-            box-shadow: 0 0 8px var(--good);
-        }
-
-        .dot.offline {
-            background: var(--bad);
-            box-shadow: 0 0 8px var(--bad);
-        }
-
-        /* Layout */
-        .main-grid {
+        /* ---------- 3-column layout ---------- */
+        .workspace {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+            grid-template-columns: 300px 1fr 320px;
+            height: calc(100vh - 60px);
+        }
+        .col { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+        .col.sources { border-right: 1px solid var(--line); }
+        .col.aside { border-left: 1px solid var(--line); }
+
+        .col-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 20px 14px; flex-shrink: 0;
+        }
+        .col-head h2 {
+            font-size: 0.72em; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.12em; color: var(--mut);
+        }
+        .col-head .count { font-size: 0.72em; color: var(--mut-2); font-family: var(--mono); }
+
+        /* ---------- Sources ---------- */
+        .add-btn {
+            margin: 0 20px 12px;
+            padding: 11px; border-radius: 9px;
+            background: var(--ink); color: #000;
+            border: none; font-weight: 500; font-size: 0.84em; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: opacity .15s;
+        }
+        .add-btn:hover { opacity: 0.85; }
+
+        .dropzone {
+            margin: 0 20px 16px; padding: 22px 14px;
+            border: 1px dashed var(--line-2); border-radius: 10px;
+            text-align: center; color: var(--mut-2); font-size: 0.76em;
+            transition: border-color .2s, background .2s, color .2s; cursor: pointer;
+        }
+        .dropzone.drag { border-color: var(--ink); background: var(--bg-sunk); color: var(--ink); }
+
+        .paste-box { margin: 0 20px 14px; }
+        .paste-box textarea {
+            width: 100%; min-height: 74px; max-height: 200px; resize: vertical;
+            background: var(--bg-soft); border: 1px solid var(--line); border-radius: 9px;
+            color: var(--ink); font-family: var(--sans); font-size: 0.82em; line-height: 1.55;
+            padding: 11px 12px; outline: none; transition: border-color .2s, box-shadow .2s;
+        }
+        .paste-box textarea::placeholder { color: var(--mut-2); }
+        .paste-box textarea:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(250,250,250,0.06); }
+        .paste-btn {
+            width: 100%; margin-top: 8px; padding: 9px; border-radius: 8px;
+            background: none; border: 1px solid var(--line-2); color: var(--ink-2);
+            font-size: 0.8em; font-weight: 500; cursor: pointer; transition: .15s;
+        }
+        .paste-btn:hover { border-color: var(--ink); color: var(--ink); }
+        .paste-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .src-divider {
+            display: flex; align-items: center; gap: 10px; margin: 0 20px 12px;
+            font-size: 0.62em; text-transform: uppercase; letter-spacing: 0.12em; color: var(--mut-2);
+        }
+        .src-divider::before, .src-divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--line);
         }
 
-        .panel {
-            background: var(--panel);
-            border: 1px solid var(--panel-border);
-            border-radius: 14px;
-            padding: 26px;
+        .source-list { flex: 1; overflow-y: auto; padding: 0 14px 16px; }
+        .source-item {
+            display: flex; align-items: center; gap: 11px;
+            padding: 11px 12px; margin-bottom: 6px;
+            border: 1px solid var(--line); border-radius: 9px;
+            transition: border-color .15s, background .15s;
+        }
+        .source-item:hover { border-color: var(--line-2); background: var(--bg-soft); }
+        .source-item input[type=checkbox] {
+            appearance: none; -webkit-appearance: none;
+            width: 15px; height: 15px; border: 1.5px solid var(--line-2); border-radius: 4px;
+            flex-shrink: 0; cursor: pointer; position: relative; transition: .15s;
+        }
+        .source-item input[type=checkbox]:checked { background: var(--ink); border-color: var(--ink); }
+        .source-item input[type=checkbox]:checked::after {
+            content: '✓'; color: #000; font-size: 10px; position: absolute;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
+        .source-badge {
+            font-family: var(--mono); font-size: 8px; font-weight: 700; letter-spacing: 0.04em;
+            padding: 3px 5px; border-radius: 4px; background: var(--bg-sunk);
+            color: var(--ink-2); flex-shrink: 0; border: 1px solid var(--line);
+        }
+        .source-meta { flex: 1; min-width: 0; }
+        .source-name { font-size: 0.82em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .source-sub { font-size: 0.66em; color: var(--mut-2); font-family: var(--mono); margin-top: 2px; }
+        .source-del {
+            background: none; border: none; color: var(--mut-2); cursor: pointer;
+            font-size: 13px; padding: 2px 4px; flex-shrink: 0; line-height: 1;
+        }
+        .source-del:hover { color: var(--ink); }
+
+        .empty {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 10px; color: var(--mut-2); text-align: center; padding: 40px 20px; height: 100%;
+        }
+        .empty .big {
+            width: 40px; height: 40px; border: 1px solid var(--line-2); border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--mono); font-size: 12px; color: var(--mut-2);
+        }
+        .empty p { font-size: 0.76em; line-height: 1.6; }
+
+        /* ---------- Chat ---------- */
+        .col.chat { background: var(--bg-soft); }
+        .chat-scroll { flex: 1; overflow-y: auto; padding: 28px 26px 8px; }
+        .chat-inner { max-width: 700px; margin: 0 auto; }
+
+        .welcome { text-align: center; padding: 72px 20px; color: var(--mut); }
+        .welcome .icon {
+            width: 48px; height: 48px; border-radius: 12px; margin: 0 auto 20px;
+            border: 1px solid var(--line-2); display: flex; align-items: center; justify-content: center;
+            font-family: var(--mono); font-size: 15px; color: var(--ink);
+        }
+        .welcome h3 { color: var(--ink); font-size: 1.2em; margin-bottom: 10px; font-weight: 600; letter-spacing: -0.01em; }
+        .welcome p { font-size: 0.86em; line-height: 1.65; max-width: 400px; margin: 0 auto; }
+
+        .msg { margin-bottom: 26px; display: flex; gap: 13px; }
+        .msg .avatar {
+            width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 700; font-family: var(--mono); letter-spacing: -0.02em;
+        }
+        .msg.user .avatar { border: 1px solid var(--line-2); color: var(--ink-2); background: var(--bg); }
+        .msg.bot .avatar { background: var(--ink); color: #000; }
+        .msg .body { flex: 1; min-width: 0; padding-top: 3px; }
+        .msg .who {
+            font-size: 0.66em; color: var(--mut-2); font-family: var(--mono);
+            margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .msg .text { font-size: 0.92em; line-height: 1.7; color: var(--ink); white-space: pre-wrap; }
+        .msg.user .text { color: var(--ink-2); }
+
+        .sources-toggle {
+            margin-top: 12px; font-size: 0.72em; color: var(--mut); cursor: pointer;
+            font-family: var(--mono); display: inline-flex; align-items: center; gap: 6px;
+            border: 1px solid var(--line); border-radius: 6px; padding: 4px 9px;
+            transition: border-color .15s, color .15s;
+        }
+        .sources-toggle:hover { border-color: var(--line-2); color: var(--ink); }
+        .cited { margin-top: 10px; display: none; }
+        .cited.open { display: block; }
+        .cited .doc {
+            border: 1px solid var(--line); border-radius: 8px; padding: 12px 13px;
+            margin-top: 8px; background: var(--bg);
+        }
+        .cited .score {
+            display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: 600;
+            color: var(--mut); letter-spacing: 0.04em; margin-bottom: 8px;
+            border: 1px solid var(--line); border-radius: 20px; padding: 2px 8px;
+        }
+        .cited .doc p { font-size: 0.8em; color: var(--ink-2); line-height: 1.6; }
+
+        .err {
+            border: 1px solid var(--line-2); border-left: 2px solid var(--ink);
+            color: var(--ink-2); background: var(--bg-sunk);
+            padding: 11px 14px; border-radius: 8px; font-size: 0.84em;
         }
 
-        .panel-head {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
+        .chat-input-wrap { padding: 14px 26px 22px; flex-shrink: 0; }
+        .chat-input {
+            max-width: 700px; margin: 0 auto;
+            display: flex; align-items: flex-end; gap: 10px;
+            background: var(--bg); border: 1px solid var(--line-2);
+            border-radius: 13px; padding: 8px 8px 8px 16px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .chat-input:focus-within { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(250,250,250,0.08); }
+        .chat-input textarea {
+            flex: 1; background: none; border: none; outline: none; resize: none;
+            color: var(--ink); font-family: var(--sans); font-size: 0.92em; line-height: 1.5;
+            max-height: 140px; padding: 6px 0;
+        }
+        .chat-input textarea::placeholder { color: var(--mut-2); }
+        .send-btn {
+            width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+            background: var(--ink); color: #000; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 14px;
+            transition: opacity .15s;
+        }
+        .send-btn:hover { opacity: 0.85; }
+        .send-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+        .input-foot {
+            max-width: 700px; margin: 8px auto 0; text-align: center;
+            font-size: 0.64em; color: var(--mut-2); font-family: var(--mono);
         }
 
-        .panel-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
-            background: rgba(124, 158, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 15px;
-            flex-shrink: 0;
+        /* ---------- Aside (history + health) ---------- */
+        .aside-scroll { flex: 1; overflow-y: auto; padding: 0 18px 20px; }
+        .aside-section { margin-bottom: 26px; }
+        .aside-section h3 {
+            font-size: 0.66em; text-transform: uppercase; letter-spacing: 0.12em;
+            color: var(--mut-2); font-weight: 600; margin: 12px 2px 12px;
         }
+        .hist-item {
+            padding: 10px 12px; margin-bottom: 6px; border-radius: 8px;
+            border: 1px solid var(--line); cursor: pointer; font-size: 0.79em; color: var(--ink-2);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            transition: border-color .15s, background .15s;
+        }
+        .hist-item:hover { border-color: var(--line-2); background: var(--bg-soft); }
+        .hist-empty { font-size: 0.74em; color: var(--mut-2); padding: 6px 2px; }
 
-        .panel-head h2 {
-            font-size: 1.02em;
-            font-weight: 600;
-            color: var(--text-hi);
+        .health-card { border: 1px solid var(--line); border-radius: 10px; padding: 4px 14px; }
+        .health-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 9px 0; font-size: 0.78em;
         }
+        .health-row + .health-row { border-top: 1px solid var(--line); }
+        .health-row .k { color: var(--mut); }
+        .health-row .v { color: var(--ink); font-family: var(--mono); font-size: 0.92em; }
+        .health-row .v.good::before,
+        .health-row .v.bad::before {
+            content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+            margin-right: 6px; vertical-align: middle;
+        }
+        .health-row .v.good::before { background: var(--ink); }
+        .health-row .v.bad::before { background: var(--mut-2); }
 
-        .panel-head span {
-            display: block;
-            font-size: 0.78em;
-            color: var(--text-low);
-            font-family: var(--mono);
-            margin-top: 1px;
-        }
+        .stat-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .stat-box { border: 1px solid var(--line); border-radius: 9px; padding: 13px; }
+        .stat-box .num { font-size: 1.5em; font-weight: 700; font-family: var(--mono); letter-spacing: -0.02em; }
+        .stat-box .lbl { font-size: 0.62em; color: var(--mut-2); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
 
-        .field {
-            margin-bottom: 16px;
+        .reset-btn {
+            width: 100%; padding: 9px; border-radius: 8px;
+            background: none; border: 1px solid var(--line-2);
+            color: var(--mut); font-size: 0.78em; cursor: pointer; transition: .15s;
         }
-
-        .field label {
-            display: block;
-            margin-bottom: 7px;
-            color: var(--text-mid);
-            font-weight: 500;
-            font-size: 0.85em;
-        }
-
-        textarea, input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid var(--panel-border);
-            border-radius: 9px;
-            font-size: 14px;
-            font-family: var(--sans);
-            background: var(--bg-1);
-            color: var(--text-hi);
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        textarea::placeholder, input::placeholder {
-            color: var(--text-low);
-        }
-
-        textarea:focus, input:focus {
-            outline: none;
-            border-color: var(--accent-dim);
-            box-shadow: 0 0 0 3px var(--accent-glow);
-        }
-
-        textarea {
-            min-height: 128px;
-            resize: vertical;
-            font-family: var(--mono);
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        .row {
-            display: flex;
-            gap: 12px;
-        }
-
-        .row .field {
-            flex: 1;
-        }
-
-        .btn {
-            background: var(--accent);
-            color: #0a0b0f;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 9px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: filter 0.15s, transform 0.15s;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn:hover {
-            filter: brightness(1.1);
-        }
-
-        .btn:active {
-            transform: scale(0.99);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            filter: none;
-        }
-
-        .result {
-            background: var(--bg-1);
-            border: 1px solid var(--panel-border);
-            border-left: 3px solid var(--accent);
-            padding: 16px 18px;
-            border-radius: 9px;
-            margin-top: 16px;
-        }
-
-        .result h3 {
-            color: var(--text-hi);
-            margin-bottom: 8px;
-            font-size: 0.88em;
-            font-weight: 600;
-        }
-
-        .result p {
-            color: var(--text-mid);
-            line-height: 1.6;
-            font-size: 0.92em;
-        }
-
-        .document {
-            background: var(--panel);
-            padding: 13px 15px;
-            border-radius: 8px;
-            margin-top: 9px;
-            border: 1px solid var(--panel-border);
-        }
-
-        .document p {
-            font-size: 0.87em;
-            color: var(--text-mid);
-        }
-
-        .document-score {
-            display: inline-block;
-            background: rgba(124, 158, 255, 0.12);
-            color: var(--accent);
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-family: var(--mono);
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
+        .reset-btn:hover { border-color: var(--ink); color: var(--ink); }
 
         .loading {
-            display: inline-block;
-            width: 15px;
-            height: 15px;
-            border: 2px solid rgba(10, 11, 15, 0.25);
-            border-radius: 50%;
-            border-top-color: #0a0b0f;
-            animation: spin 0.7s linear infinite;
+            display: inline-block; width: 12px; height: 12px;
+            border: 1.5px solid var(--line-2); border-radius: 50%;
+            border-top-color: var(--ink); animation: spin .7s linear infinite;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 5px; border: 3px solid transparent; background-clip: padding-box; }
+        ::-webkit-scrollbar-thumb:hover { background: #3a3a3a; background-clip: padding-box; }
 
-        .error {
-            background: rgba(248, 113, 113, 0.08);
-            border: 1px solid rgba(248, 113, 113, 0.25);
-            border-left: 3px solid var(--bad);
-            color: #fca5a5;
-            padding: 13px 16px;
-            border-radius: 9px;
-            margin-top: 16px;
-            font-size: 0.88em;
-        }
-
-        /* Stats */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 14px;
-        }
-
-        .stat-card {
-            background: var(--bg-1);
-            border: 1px solid var(--panel-border);
-            padding: 18px;
-            border-radius: 11px;
-        }
-
-        .stat-value {
-            font-size: 1.7em;
-            font-weight: 700;
-            font-family: var(--mono);
-            color: var(--text-hi);
-            margin-bottom: 4px;
-        }
-
-        .stat-label {
-            font-size: 0.78em;
-            color: var(--text-low);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            color: var(--text-low);
-            font-size: 0.78em;
-            font-family: var(--mono);
-        }
-
-        @media (max-width: 768px) {
-            .main-grid {
-                grid-template-columns: 1fr;
-            }
-            .row {
-                flex-direction: column;
-                gap: 0;
-            }
+        @media (max-width: 1000px) {
+            .workspace { grid-template-columns: 1fr; grid-template-rows: auto 1fr; overflow-y: auto; height: auto; }
+            body { overflow: auto; }
+            .col.aside { display: none; }
+            .col.sources { border-right: none; border-bottom: 1px solid var(--line); max-height: 40vh; }
         }
     </style>
 </head>
 <body>
-    <div class="shell">
-        <div class="topbar">
-            <div class="brand">
-                <div class="brand-mark">🤖</div>
-                <div class="brand-text">
-                    <h1>RAG Pipeline</h1>
-                    <p>retrieval-augmented generation console</p>
-                </div>
+    <div class="topbar">
+        <div class="brand">
+            <div class="brand-mark">R</div>
+            <div class="brand-text">
+                <h1>RAG Notebook</h1>
+                <p>retrieval-augmented workspace</p>
             </div>
-            <div class="status-pill">
-                <span class="dot" id="statusDot"></span>
-                <span id="statusText">checking…</span>
+        </div>
+        <div class="status-pill">
+            <span class="dot" id="statusDot"></span>
+            <span id="statusText">checking…</span>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <!-- ============ LEFT: SOURCES ============ -->
+        <div class="col sources">
+            <div class="col-head">
+                <h2>Sources</h2>
+                <span class="count" id="srcCount">0</span>
+            </div>
+            <button class="add-btn" onclick="document.getElementById('fileInput').click()">
+                + Add sources
+            </button>
+            <input type="file" id="fileInput" accept=".pdf,.txt,.md" multiple hidden>
+            <div class="dropzone" id="dropzone">
+                Drop PDFs, text or markdown here
+            </div>
+
+            <div class="paste-box">
+                <textarea id="pasteText" placeholder="…or paste / type a source here"></textarea>
+                <button class="paste-btn" id="pasteBtn" onclick="addTextSource()">Add text source</button>
+            </div>
+            <div class="src-divider"><span>Saved sources</span></div>
+            <div class="source-list" id="sourceList">
+                <div class="empty">
+                    <div class="big">◍</div>
+                    <p>Saved sources will appear here.<br>Add a PDF or text file to build your knowledge base.</p>
+                </div>
             </div>
         </div>
 
-        <div class="main-grid">
-            <!-- Index Documents -->
-            <div class="panel">
-                <div class="panel-head">
-                    <div class="panel-icon">📚</div>
-                    <div>
-                        <h2>Index Documents</h2>
-                        <span>add source text to the vector store</span>
+        <!-- ============ MIDDLE: CHAT ============ -->
+        <div class="col chat">
+            <div class="chat-scroll" id="chatScroll">
+                <div class="chat-inner" id="chatInner">
+                    <div class="welcome" id="welcome">
+                        <div class="icon">✳</div>
+                        <h3>Ask your sources anything</h3>
+                        <p>Add documents on the left, then ask a question here. Answers are grounded in your indexed sources with citations.</p>
                     </div>
                 </div>
-                <div class="field">
-                    <label for="documents">Documents (one per line)</label>
-                    <textarea id="documents" placeholder="Python is a programming language...
-Machine learning enables computers to learn...
-Natural language processing helps computers understand text..."></textarea>
-                </div>
-                <button class="btn" onclick="indexDocuments()" id="indexBtn">
-                    Index Documents
-                </button>
-                <div id="indexResult"></div>
             </div>
+            <div class="chat-input-wrap">
+                <div class="chat-input">
+                    <textarea id="chatBox" rows="1" placeholder="Ask a question about your sources…"></textarea>
+                    <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+                </div>
+                <div class="input-foot">Responses are generated from your indexed sources · double-check important facts</div>
+            </div>
+        </div>
 
-            <!-- Query -->
-            <div class="panel">
-                <div class="panel-head">
-                    <div class="panel-icon">🔍</div>
-                    <div>
-                        <h2>Ask a Question</h2>
-                        <span>query the indexed knowledge base</span>
+        <!-- ============ RIGHT: HISTORY + HEALTH ============ -->
+        <div class="col aside">
+            <div class="col-head"><h2>Notebook</h2></div>
+            <div class="aside-scroll">
+                <div class="aside-section">
+                    <h3>Chat history</h3>
+                    <div id="historyList"><div class="hist-empty">No questions yet.</div></div>
+                </div>
+
+                <div class="aside-section">
+                    <h3>System health</h3>
+                    <div class="health-card" id="healthCard">
+                        <div class="health-row"><span class="k">Status</span><span class="v" id="hStatus">–</span></div>
+                        <div class="health-row"><span class="k">Retrieval</span><span class="v" id="hRetrieval">–</span></div>
+                        <div class="health-row"><span class="k">Vector DB</span><span class="v" id="hVector">–</span></div>
+                        <div class="health-row"><span class="k">Reranker</span><span class="v" id="hReranker">–</span></div>
+                        <div class="health-row"><span class="k">LLM</span><span class="v" id="hLLM">–</span></div>
                     </div>
                 </div>
-                <div class="field">
-                    <label for="query">Question</label>
-                    <input type="text" id="query" placeholder="What is machine learning?">
-                </div>
-                <div class="field">
-                    <label for="topK">Top-K results</label>
-                    <input type="number" id="topK" value="5" min="1" max="10">
-                </div>
-                <button class="btn" onclick="queryRAG()" id="queryBtn">
-                    Ask Question
-                </button>
-                <div id="queryResult"></div>
-            </div>
-        </div>
 
-        <!-- Stats -->
-        <div class="panel">
-            <div class="panel-head">
-                <div class="panel-icon">📊</div>
-                <div>
-                    <h2>Pipeline Statistics</h2>
-                    <span>live configuration and index state</span>
-                </div>
-            </div>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="docsCount">0</div>
-                    <div class="stat-label">Documents Indexed</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="retrievalMode">–</div>
-                    <div class="stat-label">Retrieval Mode</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="vectorDB">–</div>
-                    <div class="stat-label">Vector Database</div>
+                <div class="aside-section">
+                    <h3>Index</h3>
+                    <div class="stat-mini">
+                        <div class="stat-box"><div class="num" id="sChunks">0</div><div class="lbl">Chunks</div></div>
+                        <div class="stat-box"><div class="num" id="sSources">0</div><div class="lbl">Sources</div></div>
+                    </div>
+                    <button class="reset-btn" onclick="resetPipeline()">Clear all documents</button>
                 </div>
             </div>
         </div>
-
-        <footer>RAG Pipeline API · /api/health · /api/index · /api/query · /api/stats</footer>
     </div>
 
     <script>
         const API_BASE = window.location.origin;
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+                'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+
+        const sources = [];   // { id, name, type, chunks }
+        const history = [];    // strings
 
         window.addEventListener('load', () => {
-            loadStats();
             checkHealth();
+            refreshStats();
+            setInterval(checkHealth, 20000);
+            wireDropzone();
+            wireInput();
         });
 
+        /* ---------- Health / stats ---------- */
         async function checkHealth() {
             const dot = document.getElementById('statusDot');
             const text = document.getElementById('statusText');
             try {
-                const response = await fetch(`${API_BASE}/api/health`);
-                const data = await response.json();
-                if (response.ok && data.status === 'healthy') {
-                    dot.className = 'dot online';
-                    text.textContent = 'online';
+                const r = await fetch(`${API_BASE}/api/health`);
+                const d = await r.json();
+                if (r.ok && d.status === 'healthy') {
+                    dot.className = 'dot online'; text.textContent = 'online';
+                    setHealth('hStatus', 'healthy', 'good');
                 } else {
-                    dot.className = 'dot offline';
-                    text.textContent = 'unhealthy';
+                    dot.className = 'dot offline'; text.textContent = 'unhealthy';
+                    setHealth('hStatus', 'unhealthy', 'bad');
                 }
-            } catch (error) {
-                dot.className = 'dot offline';
-                text.textContent = 'offline';
+            } catch {
+                dot.className = 'dot offline'; text.textContent = 'offline';
+                setHealth('hStatus', 'offline', 'bad');
             }
         }
 
-        async function indexDocuments() {
-            const btn = document.getElementById('indexBtn');
-            const resultDiv = document.getElementById('indexResult');
-            const documentsText = document.getElementById('documents').value;
+        function setHealth(id, val, cls) {
+            const el = document.getElementById(id);
+            el.textContent = val;
+            el.className = 'v' + (cls ? ' ' + cls : '');
+        }
 
-            if (!documentsText.trim()) {
-                resultDiv.innerHTML = '<div class="error">Please enter at least one document</div>';
+        async function refreshStats() {
+            try {
+                const r = await fetch(`${API_BASE}/api/stats`);
+                const d = await r.json();
+                if (!r.ok) return;
+                document.getElementById('sChunks').textContent = d.documents_indexed ?? 0;
+                setHealth('hRetrieval', d.retrieval_mode || '–');
+                setHealth('hVector', d.vector_db_type || '–');
+                setHealth('hReranker', d.reranker_enabled ? 'on' : 'off');
+                setHealth('hLLM', d.llm_provider || '–');
+            } catch (e) { console.error(e); }
+        }
+
+        /* ---------- Sources ---------- */
+        function wireDropzone() {
+            const dz = document.getElementById('dropzone');
+            const fi = document.getElementById('fileInput');
+            fi.addEventListener('change', e => handleFiles(e.target.files));
+            dz.addEventListener('click', () => fi.click());
+            ['dragenter', 'dragover'].forEach(ev =>
+                dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('drag'); }));
+            ['dragleave', 'drop'].forEach(ev =>
+                dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('drag'); }));
+            dz.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+        }
+
+        async function handleFiles(fileList) {
+            for (const file of fileList) {
+                const id = 'src_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                const isPdf = file.name.toLowerCase().endsWith('.pdf');
+                const src = { id, name: file.name, type: isPdf ? 'pdf' : 'text', chunks: 0, status: 'reading' };
+                sources.push(src);
+                renderSources();
+                try {
+                    const text = isPdf ? await extractPdf(file) : await file.text();
+                    if (!text.trim()) throw new Error('empty file');
+                    src.status = 'indexing'; renderSources();
+                    const chunks = await indexText(text, file.name);
+                    src.chunks = chunks; src.status = 'ready';
+                } catch (err) {
+                    src.status = 'error'; src.error = err.message;
+                }
+                renderSources();
+                refreshStats();
+            }
+            document.getElementById('sSources').textContent =
+                sources.filter(s => s.status === 'ready').length;
+        }
+
+        async function addTextSource() {
+            const ta = document.getElementById('pasteText');
+            const btn = document.getElementById('pasteBtn');
+            const text = ta.value.trim();
+            if (!text) { ta.focus(); return; }
+
+            const id = 'src_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+            const firstLine = text.split('\n')[0].slice(0, 40);
+            const name = firstLine ? firstLine + (text.length > firstLine.length ? '…' : '') : 'Pasted text';
+            const src = { id, name, type: 'text', chunks: 0, status: 'indexing' };
+            sources.push(src);
+            renderSources();
+
+            btn.disabled = true; ta.value = '';
+            try {
+                const chunks = await indexText(text, name);
+                src.chunks = chunks; src.status = 'ready';
+            } catch (err) {
+                src.status = 'error'; src.error = err.message;
+            }
+            btn.disabled = false;
+            renderSources();
+            refreshStats();
+            document.getElementById('sSources').textContent =
+                sources.filter(s => s.status === 'ready').length;
+        }
+
+        async function extractPdf(file) {
+            const buf = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+            let out = '';
+            for (let p = 1; p <= pdf.numPages; p++) {
+                const page = await pdf.getPage(p);
+                const content = await page.getTextContent();
+                out += content.items.map(i => i.str).join(' ') + '\n';
+            }
+            return out;
+        }
+
+        async function indexText(text, name) {
+            // Split large docs into paragraph-ish documents so the backend chunker gets clean input
+            const parts = text.split(/\n\s*\n/).map(s => s.trim()).filter(s => s.length > 20);
+            const documents = parts.length ? parts : [text];
+            const r = await fetch(`${API_BASE}/api/index`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ documents, metadata: documents.map(() => ({ source: name })), chunk: true })
+            });
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.error || 'index failed');
+            return documents.length;
+        }
+
+        function renderSources() {
+            const list = document.getElementById('sourceList');
+            document.getElementById('srcCount').textContent = sources.length;
+            if (!sources.length) {
+                list.innerHTML = `<div class="empty"><div class="big">◍</div>
+                    <p>Saved sources will appear here.<br>Add a PDF or text file to build your knowledge base.</p></div>`;
                 return;
             }
+            list.innerHTML = sources.map(s => {
+                const badge = s.type === 'pdf' ? 'PDF' : 'TXT';
+                let sub;
+                if (s.status === 'reading') sub = 'reading…';
+                else if (s.status === 'indexing') sub = 'indexing…';
+                else if (s.status === 'error') sub = 'error: ' + (s.error || 'failed');
+                else sub = s.chunks + ' section' + (s.chunks === 1 ? '' : 's');
+                const busy = s.status === 'reading' || s.status === 'indexing';
+                return `<div class="source-item">
+                    <input type="checkbox" checked ${busy ? 'disabled' : ''}>
+                    <span class="source-badge">${badge}</span>
+                    <div class="source-meta">
+                        <div class="source-name" title="${esc(s.name)}">${esc(s.name)}</div>
+                        <div class="source-sub">${busy ? '<span class="loading"></span> ' : ''}${esc(sub)}</div>
+                    </div>
+                    <button class="source-del" onclick="removeSource('${s.id}')">✕</button>
+                </div>`;
+            }).join('');
+        }
 
-            const documents = documentsText.split('\n').filter(d => d.trim());
+        function removeSource(id) {
+            const i = sources.findIndex(s => s.id === id);
+            if (i >= 0) sources.splice(i, 1);
+            renderSources();
+            document.getElementById('sSources').textContent =
+                sources.filter(s => s.status === 'ready').length;
+        }
 
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Indexing…';
-            resultDiv.innerHTML = '';
+        /* ---------- Chat ---------- */
+        function wireInput() {
+            const box = document.getElementById('chatBox');
+            box.addEventListener('input', () => {
+                box.style.height = 'auto';
+                box.style.height = Math.min(box.scrollHeight, 140) + 'px';
+            });
+            box.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+            });
+        }
+
+        async function sendMessage() {
+            const box = document.getElementById('chatBox');
+            const q = box.value.trim();
+            if (!q) return;
+            box.value = ''; box.style.height = 'auto';
+
+            addMessage('user', q);
+            history.unshift(q); renderHistory();
+
+            const botId = addMessage('bot', '<span class="loading"></span>', true);
+            document.getElementById('sendBtn').disabled = true;
 
             try {
-                const response = await fetch(`${API_BASE}/api/index`, {
+                const r = await fetch(`${API_BASE}/api/query`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        documents: documents,
-                        chunk: true
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: q, top_k: 5, return_context: true })
                 });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    resultDiv.innerHTML = `
-                        <div class="result">
-                            <h3>✅ Success</h3>
-                            <p>Indexed ${data.indexed} documents into ${data.total_chunks} chunks</p>
-                        </div>
-                    `;
-                    loadStats();
+                const d = await r.json();
+                if (!r.ok) {
+                    setBotContent(botId, `<div class="err">${esc(d.error || 'Query failed')}</div>`);
                 } else {
-                    resultDiv.innerHTML = `
-                        <div class="error">
-                            <strong>Error:</strong> ${data.error || 'Unknown error'}
-                        </div>
-                    `;
+                    let html = `<div class="text">${esc(d.answer || '')}</div>`;
+                    if (d.documents && d.documents.length) {
+                        const did = 'c_' + botId;
+                        html += `<div class="sources-toggle" onclick="toggleCited('${did}')">${d.documents.length} source${d.documents.length === 1 ? '' : 's'}</div>`;
+                        html += `<div class="cited" id="${did}">` + d.documents.map(doc =>
+                            `<div class="doc"><span class="score">score ${(doc.score ?? 0).toFixed(3)}</span>
+                             <p>${esc(doc.text || '')}</p></div>`).join('') + `</div>`;
+                    }
+                    if (d.tokens_used)
+                        html += `<div class="input-foot" style="text-align:left;margin-top:8px">tokens used: ${d.tokens_used}</div>`;
+                    setBotContent(botId, html);
                 }
-            } catch (error) {
-                resultDiv.innerHTML = `
-                    <div class="error">
-                        <strong>Error:</strong> ${error.message}
-                    </div>
-                `;
+            } catch (err) {
+                setBotContent(botId, `<div class="err">${esc(err.message)}</div>`);
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Index Documents';
+                document.getElementById('sendBtn').disabled = false;
+                refreshStats();
             }
         }
 
-        async function queryRAG() {
-            const btn = document.getElementById('queryBtn');
-            const resultDiv = document.getElementById('queryResult');
-            const query = document.getElementById('query').value;
-            const topK = parseInt(document.getElementById('topK').value);
-
-            if (!query.trim()) {
-                resultDiv.innerHTML = '<div class="error">Please enter a question</div>';
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Thinking…';
-            resultDiv.innerHTML = '';
-
-            try {
-                const response = await fetch(`${API_BASE}/api/query`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        query: query,
-                        top_k: topK,
-                        return_context: true
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    let html = `
-                        <div class="result">
-                            <h3>💡 Answer</h3>
-                            <p>${data.answer}</p>
-                        </div>
-                    `;
-
-                    if (data.documents && data.documents.length > 0) {
-                        html += '<div class="result"><h3>📄 Source Documents</h3>';
-                        data.documents.forEach((doc) => {
-                            html += `
-                                <div class="document">
-                                    <span class="document-score">score ${doc.score.toFixed(4)}</span>
-                                    <p>${doc.text}</p>
-                                </div>
-                            `;
-                        });
-                        html += '</div>';
-                    }
-
-                    if (data.tokens_used) {
-                        html += `<p style="margin-top: 10px; color: var(--text-low); font-size: 0.82em; font-family: var(--mono);">tokens used: ${data.tokens_used}</p>`;
-                    }
-
-                    resultDiv.innerHTML = html;
-                } else {
-                    resultDiv.innerHTML = `
-                        <div class="error">
-                            <strong>Error:</strong> ${data.error || 'Unknown error'}
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `
-                    <div class="error">
-                        <strong>Error:</strong> ${error.message}
-                    </div>
-                `;
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Ask Question';
-            }
+        let msgCounter = 0;
+        function addMessage(role, content, raw) {
+            const welcome = document.getElementById('welcome');
+            if (welcome) welcome.remove();
+            const inner = document.getElementById('chatInner');
+            const id = 'msg_' + (++msgCounter);
+            const avatar = role === 'user' ? 'YOU' : 'AI';
+            const who = role === 'user' ? 'You' : 'RAG';
+            const bodyHtml = raw ? content : `<div class="text">${esc(content)}</div>`;
+            inner.insertAdjacentHTML('beforeend',
+                `<div class="msg ${role}" id="${id}">
+                    <div class="avatar">${avatar}</div>
+                    <div class="body"><div class="who">${who}</div><div class="content">${bodyHtml}</div></div>
+                </div>`);
+            scrollChat();
+            return id;
         }
 
-        async function loadStats() {
-            try {
-                const response = await fetch(`${API_BASE}/api/stats`);
-                const data = await response.json();
+        function setBotContent(id, html) {
+            const el = document.querySelector(`#${id} .content`);
+            if (el) el.innerHTML = html;
+            scrollChat();
+        }
 
-                if (response.ok) {
-                    document.getElementById('docsCount').textContent = data.documents_indexed || 0;
-                    document.getElementById('retrievalMode').textContent = data.retrieval_mode || '–';
-                    document.getElementById('vectorDB').textContent = data.vector_db_type || '–';
-                }
-            } catch (error) {
-                console.error('Failed to load stats:', error);
-            }
+        function toggleCited(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('open');
+        }
+
+        function scrollChat() {
+            const s = document.getElementById('chatScroll');
+            s.scrollTop = s.scrollHeight;
+        }
+
+        /* ---------- History ---------- */
+        function renderHistory() {
+            const el = document.getElementById('historyList');
+            if (!history.length) { el.innerHTML = '<div class="hist-empty">No questions yet.</div>'; return; }
+            el.innerHTML = history.slice(0, 25).map(q =>
+                `<div class="hist-item" title="${esc(q)}" onclick="reAsk('${esc(q).replace(/'/g, "\\'")}')">${esc(q)}</div>`
+            ).join('');
+        }
+
+        function reAsk(q) {
+            const box = document.getElementById('chatBox');
+            box.value = q; box.focus();
+        }
+
+        /* ---------- Reset ---------- */
+        async function resetPipeline() {
+            if (!confirm('Clear all indexed documents from the pipeline?')) return;
+            try {
+                await fetch(`${API_BASE}/api/reset`, { method: 'POST' });
+                sources.length = 0;
+                renderSources();
+                document.getElementById('sSources').textContent = '0';
+                refreshStats();
+            } catch (e) { console.error(e); }
+        }
+
+        function esc(s) {
+            return String(s).replace(/[&<>"']/g, c =>
+                ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
     </script>
 </body>

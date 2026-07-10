@@ -1,5 +1,5 @@
 """Metrics for evaluating retrieval quality"""
-from typing import List, Dict, Any, Set, Tuple
+from typing import List, Dict, Any, Set, Tuple, Optional
 import numpy as np
 
 

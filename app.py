@@ -18,18 +18,20 @@ import sys
 import pickle
 import argparse
 from pathlib import Path
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load environment variables (override so charm/.env wins over any pre-existing
+# system environment variables of the same name, e.g. a stale GEMINI_API_KEY)
+load_dotenv(override=True)
 
 # Add current directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Initialize Flask app
-app = Flask(__name__)
+PUBLIC_DIR = Path(__file__).parent / "public"
+app = Flask(__name__, static_folder=str(PUBLIC_DIR), static_url_path="")
 CORS(app)
 
 # Configuration
@@ -107,14 +109,22 @@ def save_documents(rag):
 
 @app.route('/')
 def index():
-    """Root endpoint - API information"""
+    """Serve the web interface"""
+    return send_from_directory(PUBLIC_DIR, 'index.html')
+
+
+@app.route('/api')
+@app.route('/api/')
+def api_info():
+    """API information"""
     return jsonify({
         "status": "ok",
         "service": "RAG Pipeline API (Local Development)",
         "version": "1.0.0",
         "description": "Retrieval-Augmented Generation Pipeline with Flask",
         "endpoints": {
-            "GET /": "API information",
+            "GET /": "Web interface",
+            "GET /api": "API information",
             "GET /api/health": "Health check",
             "POST /api/index": "Index documents",
             "POST /api/query": "Query the RAG pipeline",
@@ -376,6 +386,7 @@ def not_found(error):
         "path": request.path,
         "available_endpoints": [
             "GET /",
+            "GET /api",
             "GET /api/health",
             "POST /api/index",
             "POST /api/query",

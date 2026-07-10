@@ -87,13 +87,19 @@ class RAGPipeline:
             self.reranker = None
 
         # Initialize LLM
+        self.llm_provider = llm_provider
         if self.verbose:
             self.logger.info(f"Loading LLM: {llm_provider} - {self.config.llm_model}")
 
+        api_keys = {
+            "openai": self.config.openai_api_key,
+            "anthropic": self.config.anthropic_api_key,
+            "gemini": self.config.gemini_api_key,
+        }
         self.llm = LLMFactory.create(
             provider=llm_provider,
             model=self.config.llm_model,
-            api_key=self.config.openai_api_key if llm_provider == "openai" else self.config.anthropic_api_key
+            api_key=api_keys.get(llm_provider)
         )
 
         # Initialize prompt engine

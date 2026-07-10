@@ -16,6 +16,12 @@ try:
 except ImportError:
     ANTHROPIC_AVAILABLE = False
 
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+
 
 @dataclass
 class LLMResponse:
@@ -206,6 +212,82 @@ class AnthropicLLM(LLMInterface):
         )
 
 
+class GeminiLLM(LLMInterface):
+    """Google Gemini interface"""
+
+    def __init__(
+        self,
+        model: str = "gemini-2.5-flash",
+        api_key: Optional[str] = None
+    ):
+        """
+        Initialize Gemini LLM
+
+        Args:
+            model: Model name (gemini-2.5-flash, gemini-2.5-pro, etc.)
+            api_key: Google API key
+        """
+        if not GEMINI_AVAILABLE:
+            raise ImportError("google-generativeai package not available. Install with: pip install google-generativeai")
+
+        self.model_name = model
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+
+        if not self.api_key:
+            raise ValueError("Gemini API key not provided")
+
+        genai.configure(api_key=self.api_key)
+        self.client = genai.GenerativeModel(model)
+
+    def generate(
+        self,
+        prompt: str,
+        temperature: float = 0.7,
+        max_tokens: int = 2000,
+        **kwargs
+    ) -> LLMResponse:
+        """Generate text from prompt"""
+        messages = [{"role": "user", "content": prompt}]
+        return self.generate_with_history(messages, temperature, max_tokens, **kwargs)
+
+    def generate_with_history(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: float = 0.7,
+        max_tokens: int = 2000,
+        **kwargs
+    ) -> LLMResponse:
+        """Generate with conversation history"""
+        role_map = {"assistant": "model", "user": "user"}
+        history = [
+            {"role": role_map.get(m["role"], "user"), "parts": [m["content"]]}
+            for m in messages
+        ]
+
+        response = self.client.generate_content(
+            history,
+            generation_config=genai.types.GenerationConfig(
+                temperature=temperature,
+                max_output_tokens=max_tokens,
+                **kwargs
+            )
+        )
+
+        usage = getattr(response, "usage_metadata", None)
+        tokens_used = usage.total_token_count if usage else None
+
+        return LLMResponse(
+            text=response.text,
+            model=self.model_name,
+            tokens_used=tokens_used,
+            finish_reason=response.candidates[0].finish_reason.name if response.candidates else None,
+            metadata={
+                "prompt_tokens": usage.prompt_token_count if usage else None,
+                "completion_tokens": usage.candidates_token_count if usage else None,
+            }
+        )
+
+
 class LLMFactory:
     """Factory for creating LLM instances"""
 
@@ -220,7 +302,7 @@ class LLMFactory:
         Create an LLM instance
 
         Args:
-            provider: Provider name ('openai' or 'anthropic')
+            provider: Provider name ('openai', 'anthropic', or 'gemini')
             model: Model name (optional, uses default if not provided)
             api_key: API key (optional, reads from env if not provided)
             **kwargs: Additional arguments
@@ -236,6 +318,9 @@ class LLMFactory:
         elif provider == "anthropic":
             default_model = "claude-3-sonnet-20240229"
             return AnthropicLLM(model=model or default_model, api_key=api_key, **kwargs)
+        elif provider == "gemini":
+            default_model = "gemini-2.5-flash"
+            return GeminiLLM(model=model or default_model, api_key=api_key, **kwargs)
         else:
             raise ValueError(f"Unknown provider: {provider}")
 

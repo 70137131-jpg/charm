@@ -4,15 +4,16 @@ from typing import Optional
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 
 class Config(BaseModel):
     """Configuration for RAG pipeline"""
 
     # API Keys
-    openai_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY"))
-    anthropic_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("ANTHROPIC_API_KEY"))
+    openai_api_key: Optional[str] = Field(default_factory=lambda: (os.getenv("OPENAI_API_KEY") or "").strip() or None)
+    anthropic_api_key: Optional[str] = Field(default_factory=lambda: (os.getenv("ANTHROPIC_API_KEY") or "").strip() or None)
+    gemini_api_key: Optional[str] = Field(default_factory=lambda: (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or "").strip() or None)
 
     # Model Configuration
     embedding_model: str = Field(
